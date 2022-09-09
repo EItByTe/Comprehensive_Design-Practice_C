@@ -1,22 +1,22 @@
 % UDP的MATLAB实现
 % u1是用来接收服务器端的端口，'192.168.0.108'改成服务端侧的IP地址
 % u2是用来发送给可视化的端口，'192.168.0.107'改成可视化端的IP地址，RemotePort改为可视化端的端口号，LocalPort无关紧要，随便设置个不重复的即可
-u1=udp('192.168.0.108','RemotePort',8080,'LocalPort',8851);
+u1=udp('127.0.0.1','RemotePort',8089,'LocalPort',8854);
 u1.InputBufferSize = 4096;  %字节数
-u2=udp('192.168.0.107','RemotePort',8851,'LocalPort',8842); % 传输端口 '192.168.0.108'填远程主机的ip
+u2=udp('127.0.0.1','RemotePort',8854,'LocalPort',8845); % 传输端口 '192.168.0.108'填远程主机的ip
 fopen(u1);%打开udp连接（实际上并没有连接，udp是无连接的通信协议）
 fopen(u2);
 
-fprintf(u1,'m\n'); % 主机1（就是udp1）发送文本消息
+fprintf(u1,'p'); % 主机1（就是udp1）发送文本消息
 recv = fread(u1,4096,'uchar');
 recv_info = recv(1:2:end,:);
-recv_head = recv_info(1,1);
+% recv_head = recv_info(1,1);
 % 通过标识符判断包是否正确
-if(recv_head ~= 1)
-    fclose(u1);delete(u1);clear u1;
-    error('package接受错误，请重新运行程序!');
-end
-recv_info_no_head = recv_info(2:end,:);
+% if(recv_head ~= 1)
+%     fclose(u1);delete(u1);clear u1;
+%     error('package接受错误，请重新运行程序!');
+% end
+recv_info_no_head = recv_info(1:end,:);
 
 agent = struct('path_length',0, 'Speed', 0,'LastSpeed',0, 'LocationX',0,'LocationY', 0, 'Direction', 0, 'path_array', 0,...
                 'path_passed_length', 1, 'path_x', [], 'path_y', [], 'path_dir', []);
@@ -24,99 +24,47 @@ agent = struct('path_length',0, 'Speed', 0,'LastSpeed',0, 'LocationX',0,'Locatio
 disp('agent initializing...')
 position_path_length(1) = 1;
 agent(1).path_length = recv_info_no_head(position_path_length(1), 1);
-position_path_length(2) = agent(1).path_length*3+position_path_length(1)+1;
-agent(2).path_length = recv_info_no_head(position_path_length(2), 1);
-position_path_length(3) = agent(2).path_length*3+position_path_length(2)+1;
-agent(3).path_length = recv_info_no_head(position_path_length(3), 1);
-position_path_length(4) = agent(3).path_length*3+position_path_length(3)+1;
-agent(4).path_length = recv_info_no_head(position_path_length(4), 1);
-position_path_length(5) = agent(4).path_length*3+position_path_length(4)+1;
-agent(5).path_length = recv_info_no_head(position_path_length(5), 1);
 
 % agent initializing...
 
 agent(1).Speed = 0;
-agent(2).Speed = 0;
-agent(3).Speed = 0;
-agent(4).Speed = 0;
-agent(5).Speed = 0;
 
 agent(1).LastSpeed = 0;
-agent(2).LastSpeed = 0;
-agent(3).LastSpeed = 0;
-agent(4).LastSpeed = 0;
-agent(5).LastSpeed = 0;
 
 agent(1).path_passed_length = 1;
-agent(2).path_passed_length = 1;
-agent(3).path_passed_length = 1;
-agent(4).path_passed_length = 1;
-agent(5).path_passed_length = 1;
 
 agent(1).LocationX = recv_info_no_head(position_path_length(1)+1, 1);
-agent(2).LocationX = recv_info_no_head(position_path_length(2)+1, 1);
-agent(3).LocationX = recv_info_no_head(position_path_length(3)+1, 1);
-agent(4).LocationX = recv_info_no_head(position_path_length(4)+1, 1);
-agent(5).LocationX = recv_info_no_head(position_path_length(5)+1, 1);
 
 agent(1).LocationY = recv_info_no_head(position_path_length(1)+2, 1);
-agent(2).LocationY = recv_info_no_head(position_path_length(2)+2, 1);
-agent(3).LocationY = recv_info_no_head(position_path_length(3)+2, 1);
-agent(4).LocationY = recv_info_no_head(position_path_length(4)+2, 1);
-agent(5).LocationY = recv_info_no_head(position_path_length(5)+2, 1);
 
 agent(1).Direction = recv_info_no_head(position_path_length(1)+3, 1);
-agent(2).Direction = recv_info_no_head(position_path_length(2)+3, 1);
-agent(3).Direction = recv_info_no_head(position_path_length(3)+3, 1);
-agent(4).Direction = recv_info_no_head(position_path_length(4)+3, 1);
-agent(5).Direction = recv_info_no_head(position_path_length(5)+3, 1);
 
-agent(1).path_array = recv_info_no_head(position_path_length(1)+1:position_path_length(2)-1, 1);
-agent(2).path_array = recv_info_no_head(position_path_length(2)+1:position_path_length(3)-1, 1);
-agent(3).path_array = recv_info_no_head(position_path_length(3)+1:position_path_length(4)-1, 1);
-agent(4).path_array = recv_info_no_head(position_path_length(4)+1:position_path_length(5)-1, 1);
-agent(5).path_array = recv_info_no_head(position_path_length(5)+1:end, 1);
+agent(1).path_array = recv_info_no_head(position_path_length(1)+1:end, 1);
 
 agent(1).path_x = agent(1).path_array(1:3:end,1);
 agent(1).path_y = agent(1).path_array(2:3:end,1);
 agent(1).path_dir = agent(1).path_array(3:3:end,1);
 
-agent(2).path_x = agent(2).path_array(1:3:end,1);
-agent(2).path_y = agent(2).path_array(2:3:end,1);
-agent(2).path_dir = agent(2).path_array(3:3:end,1);
-
-agent(3).path_x = agent(3).path_array(1:3:end,1);
-agent(3).path_y = agent(3).path_array(2:3:end,1);
-agent(3).path_dir = agent(3).path_array(3:3:end,1);
-
-agent(4).path_x = agent(4).path_array(1:3:end,1);
-agent(4).path_y = agent(4).path_array(2:3:end,1);
-agent(4).path_dir = agent(4).path_array(3:3:end,1);
-
-agent(5).path_x = agent(5).path_array(1:3:end,1);
-agent(5).path_y = agent(5).path_array(2:3:end,1);
-agent(5).path_dir = agent(5).path_array(3:3:end,1);
-
-disp("agent1-5 Initialized finished");
+disp("agent Initialized finished");
 
 %PID控制小车循路径规划前进
 pid = struct('SetSpeed', 0, 'LastSpeed', 0, 'err', 0.0, 'err_last',0.0, 'acceleration', 0.0, 'integral', 0.0,...
             'Kp', 0.2, 'Ki', 0.015, 'Kd', 0.2);
-        
-for pid_i = 1:5
-    pid(pid_i).SetSpeed = 0;
-    pid(pid_i).LastSpeed = 0;
-    pid(pid_i).err = 0.0;
-    pid(pid_i).err_last = 0.0;
-    pid(pid_i).acceleration = 0.0;
-    pid(pid_i).integral = 0.0;
-    pid(pid_i).Kp = 0.2;
-    pid(pid_i).Ki = 0.015;
-    pid(pid_i).Kd = 0.2;
-end
-disp('pid1-5 Initialized finished \n');
+pid_i = 1;
 
-for i = 1:5
+pid(pid_i).SetSpeed = 0;
+pid(pid_i).LastSpeed = 0;
+pid(pid_i).err = 0.0;
+pid(pid_i).err_last = 0.0;
+pid(pid_i).acceleration = 0.0;
+pid(pid_i).integral = 0.0;
+pid(pid_i).Kp = 0.2;
+pid(pid_i).Ki = 0.015;
+pid(pid_i).Kd = 0.2;
+
+disp('pid Initialized finished \n');
+
+for i = 1:1
     while(1)
         j = 1;
         along_count = 0;
@@ -185,7 +133,7 @@ for i = 1:5
 %         fscanf(u1);
         
 %         disp(num2str(agent(i).path_passed_length));
-        
+        pause(10);
         if(agent(i).path_passed_length == agent(i).path_length)
             display_str = ['agent', num2str(i),' achieved!'];
             disp(display_str);

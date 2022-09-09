@@ -8,6 +8,8 @@
 #include<winsock2.h>
 #include<string.h>
 #include<iostream>
+
+#include "log.cpp"
 using namespace std;
 #pragma comment(lib,"ws2_32.lib")
 #define BUFFER_SIZE 4000
@@ -17,36 +19,35 @@ bool flag = 1;
 enum DIRECTION { UP, DOWN, LEFT, RIGHT };  
 
 //0 accessable, 1 barrier
-int map[40][40] = {
-	//{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-	//{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,1,1,2,2,1,1,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,1,1,2,2,1,1,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0 },
-	//{ 0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0 },
-	//{ 1,1,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,1,1 },
-	//{ 2,2,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,2,2 },
-	//{ 0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0 },
-	//{ 0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,1,1,1,1,1,1,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,1,1,0,0,1,1,0,0,0,1,1,1,1,0,0,0,1,1,0,0,1,1,0,0 },
-	//{ 0,0,0,0,0,0,0,0,0,0,0,1,3,4,1,0,0,0,0,0,0,0,0,0,0,0 },
-	//{ 0,0,0,0,0,0,0,0,0,0,0,1,4,4,1,0,0,0,0,0,0,0,0,0,0,0 }
-};
+int map[35][35] = {};
 
 int path[400][3] = {};
+
+void log_file(int x, int y, int dir, const char* filename)
+{
+	auto now = std::chrono::system_clock::now();
+	//通过不同精度获取相差的毫秒数
+	uint64_t dis_millseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count()
+		- std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count() * 1000;
+	time_t tt = std::chrono::system_clock::to_time_t(now);
+	auto time_tm = localtime(&tt);
+	char strTime[60] = { 0 };
+
+
+
+	char dir_str[][6] = { "UP","DOWN","LEFT","RIGHT" };
+
+	sprintf(strTime, "%d-%02d-%02d %02d:%02d:%02d   position: (%d,%d)  direction: %s", time_tm->tm_year + 1900,
+		time_tm->tm_mon + 1, time_tm->tm_mday, time_tm->tm_hour,
+		time_tm->tm_min, time_tm->tm_sec, x, y, dir_str[dir]);
+	std::cout << strTime << std::endl;
+
+	ofstream fout;
+	//fout.open("log.txt", ios::app);
+	fout.open(filename, ios::app);
+	fout << strTime << endl;
+	fout.close();
+}
 
 //CAR(CUSTOMER)
 struct CAR
@@ -62,20 +63,20 @@ void outputPage1()
 {
 	IMAGE logoImg;
 	loadimage(&logoImg, _T("logo.png"), 413, 127);
-	putimage(113, 40, &logoImg);
+	putimage(263, 40, &logoImg);
 
 	settextcolor(RGB(65, 105, 225));
 	settextstyle(30, 0, _T("微软雅黑"));
 	//rectangle(195, 200, 275, 240);
 	setlinecolor(RGB(65, 105, 225));
 	setlinestyle(0, 2.5);
-	rectangle(245, 260, 415, 300);
+	rectangle(395, 260, 565, 300);
 	//outtextxy(210, 205, _T("说 明"));
-	outtextxy(250, 265, _T("CALL THE TAXI"));
-	outtextxy(220, 205, _T("A Simulation of DIDI"));
+	outtextxy(400, 265, _T("CALL THE TAXI"));
+	outtextxy(370, 205, _T("A Simulation of DIDI"));
 
 	settextstyle(22, 0, _T("微软雅黑"));
-	outtextxy(220, 500, _T("Designed by CC ZRG LEP CS"));
+	outtextxy(370, 700, _T("Designed by CC ZRG LEP CS"));
 
 	//******************  detect the action of mouse  *********************
 	MOUSEMSG m;
@@ -85,7 +86,7 @@ void outputPage1()
 		switch (m.uMsg)
 		{
 		case WM_LBUTTONDOWN:
-			if ((m.x >= 245 && m.x <= 415) && (m.y >= 260 && m.y <= 300))
+			if ((m.x >= 395 && m.x <= 565) && (m.y >= 260 && m.y <= 300))
 			{
 				cleardevice();
 				return;
@@ -104,9 +105,9 @@ void outputPage2()
 
 	IMAGE home;
 	loadimage(&home, _T("building.png"), 25, 25);
-	for (int i = 0; i < 26; i++)
+	for (int i = 0; i < 35; i++)
 	{
-		for (int j = 0; j < 26; j++)
+		for (int j = 0; j < 35; j++)
 		{
 			switch (map[i][j])
 			{
@@ -161,7 +162,7 @@ void victory()
 	//cleardevice();
 	settextcolor(RGB(255,215,0));
 	settextstyle(70, 35, _T("微软雅黑"));
-	outtextxy(170, 170, _T("Got You!"));
+	outtextxy(320, 170, _T("Got You!"));
 }
 
 
@@ -217,7 +218,7 @@ void allCARMove(CAR* CAR, DIRECTION direction, IMAGE* img, int n)
 	}
 }
 //*********************   Start the simulation   ************************
-void Start(int taxi_x, int taxi_y, int customer_x, int customer_y)
+void Start(int taxi_x, int taxi_y, int customer_x, int customer_y, int path_len)
 {
 	srand((unsigned)time(NULL));
 	int times = 0;                            //记录当前程序的休眠次数
@@ -225,7 +226,7 @@ void Start(int taxi_x, int taxi_y, int customer_x, int customer_y)
 	//***********************  the Taxi  ***********************
 	CAR myCARMove;                              //TAXI
 	IMAGE myCAR_img;
-	loadimage(&myCAR_img, _T("taxi.png"), 50, 50);
+	loadimage(&myCAR_img, _T("taxi.png"), 25, 25);
 
 	myCARMove.CAR_x = taxi_x;                           //original location
 	myCARMove.CAR_y = taxi_y;
@@ -237,7 +238,7 @@ void Start(int taxi_x, int taxi_y, int customer_x, int customer_y)
 	//***************************  Customer **************************
 	CAR Customer;
 	IMAGE Customer_img;
-	loadimage(&Customer_img, _T("school.png"), 50, 50);
+	loadimage(&Customer_img, _T("school.png"), 25, 25);
 
 
 	Customer.CAR_y = customer_y;
@@ -254,59 +255,62 @@ void Start(int taxi_x, int taxi_y, int customer_x, int customer_y)
 	// ***************   检测键盘事件  *******************
 	bool Flag = 1;
 	int step = 1;
-	while (1)
+	char filename[] = "log.txt";
+	while (step < path_len)
 	{
-		//终点
-		map_par(&Customer, 100);
-		putimage(Customer.CAR_x * 25, Customer.CAR_y * 25, &Customer_img);
+		////终点
+		//map_par(&Customer, 100);
+		//putimage(Customer.CAR_x * 25, Customer.CAR_y * 25, &Customer_img);
 		
 		// *********************************   小车移动 ****************************
-		if (_kbhit())
-		{
+		log_file(path[step][1], path[step][0], path[step][2], filename);
 
-			//use the data from matlab
-			int key = int(path[step][2]);   //direction
-			int speed = abs(int(path[step][0]- path[step+1][0]))+ abs(int(path[step][1] - path[step + 1][1]));
-			while (speed > 0) {
-				speed--;
-				switch (key)
-				{
-				case 0:
-					if (Customer.CAR_x * 25 == myCARMove.CAR_x * 25 && Customer.CAR_y * 25 == myCARMove.CAR_y * 25 - 50)
-					{
-						Flag = 0;
-						break;
-					}
-					allCARMove(&myCARMove, UP, &myCAR_img, 200);
-					break;
-				case 1:
-					if (Customer.CAR_x * 25 == myCARMove.CAR_x * 25 && Customer.CAR_y * 25 == myCARMove.CAR_y * 25 + 50)
-					{
-						Flag = 0;
-						break;
-					}
-					allCARMove(&myCARMove, DOWN, &myCAR_img, 200);
-					break;
-				case 2:
-					if (Customer.CAR_x * 25 == myCARMove.CAR_x * 25 - 50 && Customer.CAR_y * 25 == myCARMove.CAR_y * 25)
-					{
-						Flag = 0;
-						break;
-					}
-					allCARMove(&myCARMove, LEFT, &myCAR_img, 200);
-					break;
-				case 3:
-					if (Customer.CAR_x * 25 == myCARMove.CAR_x * 25 + 50 && Customer.CAR_y * 25 == myCARMove.CAR_y * 25)
-					{
-						Flag = 0;
-					}
-					allCARMove(&myCARMove, RIGHT, &myCAR_img, 200);
-					break;
-				}
-				Sleep(500);
+		//use the data from matlab
+		int key = int(path[step][2]);   //direction
+		int speed = abs(int(path[step][0] - path[step + 1][0])) + abs(int(path[step][1] - path[step + 1][1]));
+		//while (speed > 0) {
+		//	speed--;
+		setfillcolor(WHITE);
+		solidrectangle(path[step-1][1] * 25, path[step-1][0] * 25, path[step-1][1] * 25 + 25, path[step-1][0] * 25 + 25);  //cover its old place
+		putimage(path[step][1] * 25, path[step][0] * 25, &myCAR_img);
+		/*switch (key)
+		{
+		case 0:
+			if (Customer.CAR_x * 25 == myCARMove.CAR_x * 25 && Customer.CAR_y * 25 == myCARMove.CAR_y * 25 - 25)
+			{
+				Flag = 0;
+				break;
 			}
+			allCARMove(&myCARMove, UP, &myCAR_img, 200);
+			break;
+		case 1:
+			if (Customer.CAR_x * 25 == myCARMove.CAR_x * 25 && Customer.CAR_y * 25 == myCARMove.CAR_y * 25 + 25)
+			{
+				Flag = 0;
+				break;
+			}
+			allCARMove(&myCARMove, DOWN, &myCAR_img, 200);
+			break;
+		case 2:
+			if (Customer.CAR_x * 25 == myCARMove.CAR_x * 25 - 25 && Customer.CAR_y * 25 == myCARMove.CAR_y * 25)
+			{
+				Flag = 0;
+				break;
+			}
+			allCARMove(&myCARMove, LEFT, &myCAR_img, 200);
+			break;
+		case 3:
+			if (Customer.CAR_x * 25 == myCARMove.CAR_x * 25 + 25 && Customer.CAR_y * 25 == myCARMove.CAR_y * 25)
+			{
+				Flag = 0;
+			}
+			allCARMove(&myCARMove, RIGHT, &myCAR_img, 200);
+			break;
+		}*/
+		Sleep(500);
+		//}
 			
-		}
+		
 		step++;
 		if (!Flag)
 		{
@@ -333,7 +337,7 @@ int main()
 	sock_Client = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);//创建客户端用于通信的Socket
 	SOCKADDR_IN addr_server; //服务器的地址数据结构
 	addr_server.sin_family = AF_INET;
-	addr_server.sin_port = htons(8080);//端口号
+	addr_server.sin_port = htons(8089);//端口号
 	addr_server.sin_addr.S_un.S_addr = inet_addr("127.0.0.1"); //127.0.0.1为本电脑IP地址
 	SOCKADDR_IN sock;
 	int len = sizeof(sock);
@@ -350,14 +354,14 @@ int main()
 		receBuf[last] = '\0'; //给字符数组加一个'\0'，表示结束了。不然输出有乱码
 		short* buff = (short*)receBuf;
 		//printf("接收到数据：%s\n", buff);
-		for (int i = 0; i < 40; i++) {
-			for (int j = 0; j < 40; j++)
+		for (int i = 0; i < 35; i++) {
+			for (int j = 0; j < 35; j++)
 			{
-				map[i][j] = buff[i * 40 + j];
+				map[i][j] = buff[i * 35 + j];
 			}
 		}
-		for (int i = 0; i < 40; i++) {
-			for (int j = 0; j < 40; j++)
+		for (int i = 0; i < 35; i++) {
+			for (int j = 0; j < 35; j++)
 			{
 				cout << map[i][j];
 			}
@@ -379,44 +383,44 @@ int main()
 
 	if (last > 0)
 	{
-		cout << "recived!" << last << endl;
+		//cout << "recived!" << last << endl;
 		receBuf[last] = '\0'; //给字符数组加一个'\0'，表示结束了。不然输出有乱码
 		short* buff = (short*)receBuf;
 		path_len = buff[0];
-		cus_x = buff[path_len * 3 - 2];
-		cus_y = buff[path_len * 3 - 1];
-		taxix = buff[1];
-		taxiy = buff[2];
+		cout << path_len << endl;
+		cus_x = buff[path_len * 3 - 1];
+		cus_y = buff[path_len * 3 - 2];
+		taxix = buff[2];
+		taxiy = buff[1];
+		cout << cus_x << cus_y << taxix << taxiy << endl;
+		for (int i = 0; i < 400; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				path[i][j] = buff[1 + i * 3 + j];
+			}
+		}
+		//printf("接收到数据：%s\n", receBuf);
 		for (int i = 0; i < 400; i++)
 		{
 			if (1 + i * 3 < last)
 			{
 				for (int j = 0; j < 3; j++)
 				{
-					path[i][j] = buff[1 + i * 3 + j];
+					if (path[i][j] >= 0)
+						cout << path[i][j]<<" ";
 				}
-			}
-		}
-		//printf("接收到数据：%s\n", receBuf);
-		for (int i = 0; i < 200; i++)
-		{
-			if (1 + i * 3 < last)
-			{
-				for (int j = 0; j < 3; j++)
-				{
-					if (path[i][j] > 0)
-						cout << path[i][j];
-				}
-				cout << "  ";
+				cout << "    ";
 			}
 		}
 		//break;
 	}
 	//}
 
-	Sleep(20000);
+	Sleep(500);
 	//主程序
-	initgraph(650, 650);                  //初始化界面
+	//initgraph(650, 650);                  //初始化界面
+	initgraph(1000, 1000);
 	setbkcolor(0xffffff);
 	cleardevice();
 	outputPage1();
@@ -425,10 +429,10 @@ int main()
 	closesocket(sock_Client);
 	WSACleanup();
 
-	Start(taxix, taxiy, cus_x, cus_y);
+	Start(taxix, taxiy, cus_x, cus_y, path_len);
 	victory();
 	
-	//system("pause");
+	system("pause");
 	closegraph();
 	return 0;
 }

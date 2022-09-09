@@ -377,13 +377,30 @@ void World::sendCode()
 	addrSen.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 	addrSen.sin_family = AF_INET;
 
-	addrSen.sin_port = htons(8080);
+	addrSen.sin_port = htons(8089);
 	/*-----------add by ccsama----------*/
 	//绑定套接字, 绑定到端口
 	bind(sockSen, (SOCKADDR*)&addrSen, sizeof(SOCKADDR));//会返回一个SOCKET_ERROR
 	//将套接字设为监听模式， 准备接收客户请求
 	SOCKADDR_IN addrClient;   //用来接收客户端的地址信息
 	int len_SOCKADDR = sizeof(SOCKADDR);
+
+	//***********************************
+	char recvBuf3[10];    //收
+	printf("Now recving... \n");
+	//等待接收数据
+	recvfrom(sockSen, recvBuf3, 10, 0, (SOCKADDR*)&addrClient, &len_SOCKADDR);
+	//打印接受的数据
+	for (int i = 0; i < 10; i++) {
+		if (int(recvBuf3[i]) > 0)
+			cout << recvBuf3[i];
+	}
+	if (recvBuf3[0] == 'p') {
+		printf("Now sending path... \n");
+		sendto(sockSen, (char*)path_packet, path_packet_len, 0, (SOCKADDR*)&addrClient, sizeof(SOCKADDR));
+		printf("sending finished! \n");
+	}
+	//********************************************
 
 	char recvBuf2[10];    //收
 	printf("Now recving... \n");
